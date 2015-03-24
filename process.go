@@ -38,7 +38,7 @@ type Process struct {
 
 // startProcess builds and runs the given program, sending its output
 // and end event as Messages on the provided channel.
-func StartProcess(dir string, args []string, out chan<- *Message) *Process {
+func StartProcess(dir *string, args []string, out chan<- *Message) *Process {
 	p := &Process{
 		id:   string(<-uniq),
 		out:  out,
@@ -64,7 +64,7 @@ func (p *Process) Kill() {
 
 // start builds and starts the given program, sending its output to p.out,
 // and stores the running *exec.Cmd in the run field.
-func (p *Process) start(dir string, args []string) error {
+func (p *Process) start(dir *string, args []string) error {
 
 	if len(args) == 0 {
 		return errors.New("No arguments found")
@@ -96,9 +96,11 @@ func (p *Process) end(err error) {
 
 // cmd builds an *exec.Cmd that writes its standard output and error to the
 // Process' output channel.
-func (p *Process) cmd(dir string, args ...string) *exec.Cmd {
+func (p *Process) cmd(dir *string, args ...string) *exec.Cmd {
 	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Dir = dir
+	if dir != nil {
+		cmd.Dir = *dir
+	}
 	cmd.Stdout = &messageWriter{p.id, "stdout", p.out}
 	cmd.Stderr = &messageWriter{p.id, "stderr", p.out}
 	return cmd
